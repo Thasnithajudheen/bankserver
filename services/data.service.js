@@ -1,3 +1,5 @@
+const db=require('./db');
+
 let accountDetails = {
 
     1000: { acno: 1000, name: "Akhil", balance: 5000, password: "user1" },
@@ -7,69 +9,128 @@ let accountDetails = {
     1005: { acno: 1005, name: "Nayana", balance: 2000, password:"user5" }
 }
 
-let currentUser; 
+ let currentUser; 
 
 const register = (acno, name, password) => {
-    console.log("register called");
+    //console.log("register called");
 
-    if (acno in accountDetails) {
-        //alert("User already exist. Please Login")
-        return {
-            status: false,
-            statusCode: 422,
-            message: "user already exist.plz login"
+    return db.User.findOne({
+        acno}).then(user=>{//call back function
+        console.log(user)
+        if(user){
+            return {
+                status: false,
+                statusCode: 422,
+                message: "user already exist.plz login"
+            }
         }
-    }
-    else {
-        accountDetails[acno] = {
-            acno,
-            name,
-            balance: 0,
-            password
-        }
-    }
-        //this.saveDetails();
-        //alert("Registration successful")
-        console.log(this.accountDetails);
-        return {
-            status: true,
-            statusCode: 200,
-            message: "registration successful"
-        }
- }
+            else{
+                const newUser = new db.User({
+                acno,
+                name,
+                balace:0,
+                password
+        
+                  });
+                  newUser.save();
+                  return{
+                    status:true,
+                    statusCode:200,
+                    message:"Registration successful",
+
+                    name:user.name
+            
+                  }
+            }
+        
+        })
+}
+
+//     if (acno in accountDetails) {
+//         //alert("User already exist. Please Login")
+//         return {
+//             status: false,
+//             statusCode: 422,
+//             message: "user already exist.plz login"
+//         }
+//     }
+//     else {
+//         accountDetails[acno] = {
+//             acno,
+//             name,
+//             balance: 0,
+//             password
+//         }
+//     }
+//         //this.saveDetails();
+//         //alert("Registration successful")
+//         console.log(this.accountDetails);
+//         return {
+//             status: true,
+//             statusCode: 200,
+//             message: "registration successful"
+//         }
+//  }
 
 
 const checkLogin = (req, acno, password) => {
-    let dataset= accountDetails;
-    if(acno in dataset){
-        var password1= dataset[acno].password
-      if(password1 ==password){
-       req.session.currentUser = dataset[acno].name
+    var acno = parseInt(acno);
+   return db.User.findOne({
+      acno,
+      password:password
+
+    }).then(user=>{
+      console.log(user)
+      if(user){
+        req.session.currentUser = user.acno
+        console.log( req.session.currentUser)
+      
         return{
             status:true,
             statusCode:200,
-            message:"login Succesful"
+            message:"login Succesful",
+            name:user.name
             
         } 
       }
-      else{
-        return{
-            status:false,
-            statusCode:422,
-            message:"incorrect password"
-            
-        } 
+      return{
+        status:false,
+        statusCode:422,
+        message:"invalid credentials"
       }
-    }
-    else{
-        return{
-            status:false,
-            statusCode:422,
-            message:"No user exist with provided Account Number"
+})
+}
+
+    // let dataset= accountDetails;
+    // if(acno in dataset){
+    //     var password1= dataset[acno].password
+    //   if(password1 ==password){
+    //    req.session.currentUser = dataset[acno].name
+    //     return{
+    //         status:true,
+    //         statusCode:200,
+    //         message:"login Succesful"
             
-        } 
-    }
-  }
+    //     } 
+    //   }
+    //   else{
+    //     return{
+    //         status:false,
+    //         statusCode:422,
+    //         message:"incorrect password"
+            
+    //     } 
+    //   }
+    // }
+    // else{
+    //     return{
+    //         status:false,
+    //         statusCode:422,
+    //         message:"No user exist with provided Account Number"
+            
+    //     } 
+    // }
+  
 //     if (acno in accountDetails) {
 //         if (password == accountDetails[acno].password) {
 //             currentUser = accountDetails[acno].name;
@@ -98,92 +159,163 @@ const checkLogin = (req, acno, password) => {
 // }
 
 const userDeposit = (acno, password, amount) => {
-    if(!req.session.currentUser){
-        return {
-            status: false,
-            statusCode: 410,
-            message: "please login",
-           
-        }
-    }
-    var amnt = parseInt(amount);
-    let dataset=accountDetails;
-    if (acno in dataset) {
-        var password1=dataset[acno].password;
-        if (password1 == password) {
-            // let existingAmount = accountDetails[acno].balance;
-            // let newAmount = parseInt(existingAmount) + parseInt(amount);
-            dataset[acno].balance += amnt;
+    var amount = parseInt(amount);
+    return db.User.findOne({
+      acno,
+      password:password
+    }).then(user=>{
+       // console.log(user)
+      if(!user){
+        return{
+          status:false,
+          statusCode:422,
+          message:"No user exist with provided Account Number",
+          
+                }
 
-            //this.saveDetails();
-            //console.log(accountDetails);
-
-            return {
-                status: true,
-                statusCode: 200,
-                message: "account credited with amount",
-                balance: dataset[acno].balance
-            }
-        }
-        else {
-            return {
-                status: false,
-                statusCode: 422,
-                message: "incorrect password",
-
-            }
-        }
-    }
-    else {
-        return {
-            status: false,
-            statusCode: 422,
-            message: "no user exist with this account number",
-
-
-        }
-    }
+      }
+      user.balance+=amount;
+      user.save();
+      return{
+        status:true,
+        statusCode:200,
+        message:"Account has been credited",
+        balance:user.balance
+        
+              } 
+    })
+    
 }
+//     if(!req.session.currentUser){
+//         return {
+//             status: false,
+//             statusCode: 410,
+//             message: "please login",
+            
+//         }
+//     }
+//     var amount = parseInt(amount);
+//     let dataset=accountDetails;
+//     if (acno in dataset) {
+//         var password1=dataset[acno].password;
+//         if (password1 == password) {
+//             // let existingAmount = accountDetails[acno].balance;
+//             // let newAmount = parseInt(existingAmount) + parseInt(amount);
+//             dataset[acno].balance += amount;
+
+//             //this.saveDetails();
+//             //console.log(accountDetails);
+
+//             return {
+//                 status: true,
+//                 statusCode: 200,
+//                 message: "account credited with amount",
+//                 balance: dataset[acno].balance
+//             }
+//         }
+//         else {
+//             return {
+//                 status: false,
+//                 statusCode: 422,
+//                 message: "incorrect password",
+
+//             }
+//         }
+//     }
+//     else {
+//         return {
+//             status: false,
+//             statusCode: 422,
+//             message: "no user exist with this account number",
+
+
+//         }
+//     }
+// }
 
   const  userWithdraw=(acno,password,amount)=>{
-    var amnt = parseInt(amount);
-    let dataset=accountDetails;
-    if (acno in dataset) {
-        var password1=dataset[acno].password
+    var amount = parseInt(amount);
+    return db.User.findOne({
+        acno,
+        password:password
+      }).then(user=>{
+        //console.log(user)
+        if(!user){
+          return{
+            status:false,
+            statusCode:422,
+            message:"No user exist with provided Account Number",
+            
+                  }
+  
 
-        if (password1 == password) {
-            if(dataset[acno].balance>amount)
-            // let existingAmount = accountDetails[acno].balance;
-            // let newAmount = parseInt(existingAmount) - parseInt(amount);
-            dataset[acno].balance -= amnt;
+        }
+        if(req.session.currentUser !=acno){
+          return{
+            status:false,
+            statusCode:422,
+            message:"permission denied",
+           
+            
+            }
+        }
+
+        if(user.balance<amount){
+          return{
+            status:false,
+            statusCode:422,
+            message:"insufficient balance",
+           
+            
+            }
+        }
+        user.balance-=amount;
+        user.save();
+        return{
+          status:true,
+          statusCode:200,
+          message:"Account has been debited",
+          balance:user.balance
+          
+                } 
+      })
+    // let dataset=accountDetails;
+    // if (acno in dataset) {
+    //     var password1=dataset[acno].password
+
+    //     if (password1 == password) {
+    //         if(dataset[acno].balance>amount)
+    //         // let existingAmount = accountDetails[acno].balance;
+    //         // let newAmount = parseInt(existingAmount) - parseInt(amount);
+    //         dataset[acno].balance -= amount;
 
     
-        //his.saveDetails();
-        //console.log(accountDetails);
+    //     //his.saveDetails();
+    //     //console.log(accountDetails);
 
-        return{
-            status: true,
-            statusCode:200,
-                message: "account debited with amount ",
-                balance:dataset[acno].balance
-        }
-      }
-      else{
-        return{
-            status: false,
-            statusCode:422,
-                message: "incorrect password",
+    //     return{
+    //         status: true,
+    //         statusCode:200,
+    //             message: "account debited with amount ",
+    //             balance:dataset[acno].balance
+    //     }
+    //   }
+    //   else{
+    //     return{
+    //         status: false,
+    //         statusCode:422,
+    //             message: "incorrect password",
 
-        }
-      }
-    }
-    else{
-        return{
-            status: false,
-            statusCode:422,
-                message: "no user exist with this account number",
-        }         
-    }
+    //     }
+    //   }
+    // }
+    // else{
+    //     return{
+    //         status: false,
+    //         statusCode:422,
+    //             message: "no user exist with this account number",
+    //     }         
+    // }
   }
 
 module.exports = {

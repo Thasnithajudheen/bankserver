@@ -1,15 +1,15 @@
 const express= require('express');
 const session =require('express-session');
-
+const cors = require('cors')
 const dataService= require('./services/data.service');
 
 
 
 const app = express();
-// app.use(cors({
-//   origin:'http://localhost:4200/',
-//   Credentials:true
-// }))
+app.use(cors({
+  origin:'http://localhost:4200',
+  credentials:true
+}))
 
 
 app.use(session({
@@ -28,9 +28,10 @@ const logMiddleware = (req,res,next)=>{
   }
   
   
-  app.use(logMiddleware);
+  //app.use(logMiddleware);
   
   const authMiddleware=(req,res,next)=>{
+    console.log(req.session.currentUser);
     if(!req.session.currentUser){
   
       return res.json({//return in json format
@@ -49,7 +50,7 @@ const logMiddleware = (req,res,next)=>{
   }
   
   
-  
+  //
   app.use(express.json());
 
 
@@ -62,21 +63,29 @@ app.post('/',(req,res)=>{
 })
 app.post('/register',(req,res)=>{
     //console.log(req.body);
-    const result = dataService.register(req.body.acno,req.body.name, req.body.password)
-    
-   console.log(res.status(result.statusCode).json(result));
+    //const result = 
+    dataService.register(req.body.acno,req.body.name, req.body.password)
+    .then(result=>{
+        res.status(result.statusCode).json(result);
+      })
+   //console.log(res.status(result.statusCode).json(result));
     //console.log(res.send(result.message));
     //     res.status(result.statusCode);
     //    console.log(res.json(result));
    // console.log(res.status(result).statusCode);
-
+//   
+//res.status(200),send("success");
 })
-
 app.post('/checkLogin',(req,res)=>{
     // console.log(req.body);
-    const result = dataService.checkLogin(req,req.body.acno, req.body.password)
-
-    console.log(res.status(result.statusCode).json(result));
+    //const result = 
+    dataService.checkLogin(req,req.body.acno, req.body.password)
+  
+    .then(result=>{
+        res.status(result.statusCode).json(result);
+    })
+   
+    //console.log(res.status(result.statusCode).json(result));
     //console.log(res.send(result.message));
 //     res.status(result.statusCode);
 //     console.log(res.json(result));
@@ -84,18 +93,26 @@ app.post('/checkLogin',(req,res)=>{
  app.post('/userDeposit',authMiddleware,(req,res)=>{
     console.log(req.session.currentUser);//check
     // console.log(req.body);
-    const result = dataService.userDeposit(req,req.body.acno,req.body.password,req.body.amount)
-
-    console.log(res.status(result.statusCode).json(result));
+   // const result = 
+   dataService.userDeposit(req.body.acno,req.body.password,req.body.amount)
+    .then(result=>{
+        res.status(result.statusCode).json(result);
+      })
+      
+    //console.log(res.status(result.statusCode).json(result));
     //console.log(res.send(result.message));
     //     res.status(result.statusCode);
     //     console.log(res.json(result));
  })
  app.post('/userWithdraw',authMiddleware,(req,res)=>{
-    console.log(req.body);
-    const result = dataService.userWithdraw(req.body.acno,req.body.password,req.body.amount)
-
-    console.log(res.status(result.statusCode).json(result));
+   // console.log(req.body);
+   // const result = 
+   dataService.userWithdraw(req.body.acno,req.body.password,req.body.amount)
+   .then(result=>{
+    res.status(result.statusCode).json(result);
+  })
+  
+   // console.log(res.status(result.statusCode).json(result));
     //console.log(res.send(result.message));
 //     res.status(result.statusCode);
 //     console.log(res.json(result));
